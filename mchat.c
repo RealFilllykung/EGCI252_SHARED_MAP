@@ -27,7 +27,7 @@ int main(int argc, char const *argv[]){
     pid_t child;
     void* file_memory;
     struct mm_st* mm_area;
-    char* buffer = NULL;
+    char* buffer = "";
     int running = 1;
     
     if (argc > 2){
@@ -51,20 +51,23 @@ int main(int argc, char const *argv[]){
             close(fd);
             
             mm_area = (struct mm_st*) file_memory;
+            buffer = mm_area -> data_0;
             while(running){
                 while(mm_area -> written_0){
-                    sleep(1);
+                    usleep(100);
                 }
                 fgets(buffer,BUFSIZ,stdin);
-                strcpy(mm_area -> data_0, buffer);
                 mm_area -> written_0 = 1;
-                sprintf((char*)file_memory,"%s\n",buffer);
+                usleep(200);
+                
                 if(strncmp(buffer,"end chat",8) == 0){
                     kill(child,SIGTERM);
                     running = 0;
+                    munmap(file_memory, FILE_LENGTH);
+                    exit(EXIT_SUCCESS);
                 }
+                sprintf((char*)file_memory,"%s\n",buffer);
             }
-            munmap(file_memory, FILE_LENGTH);
             return 0;
         }
         else{
@@ -72,15 +75,18 @@ int main(int argc, char const *argv[]){
             close(fd);
             
             mm_area = (struct mm_st*) file_memory;
+            buffer = mm_area -> data_1;
             mm_area -> written_1 = 0;
             while(running){
                 if(mm_area -> written_1){
-                    printf("%s", mm_area -> data_1);
+                    printf("%s", buffer);
                     mm_area -> written_1 = 0;
                     if (strncmp(buffer,"end chat",8) == 0){
-                        kill(getppid(),SIGTERM);
+                        kill(getppid(),SIGINT);
                         running = 0;
+                        exit(EXIT_SUCCESS);
                     }
+                    strcpy(buffer,"");
                 }
             }
             munmap(file_memory, FILE_LENGTH);
@@ -97,18 +103,22 @@ int main(int argc, char const *argv[]){
             close(fd);
             
             mm_area = (struct mm_st*) file_memory;
+            buffer = mm_area -> data_1;
             while(running){
                 while(mm_area -> written_1){
-                    sleep(1);
+                    usleep(100);
                 }
                 fgets(buffer,BUFSIZ,stdin);
-                strcpy(mm_area -> data_1, buffer);
                 mm_area -> written_1 = 1;
-                sprintf((char*)file_memory,"%s\n",buffer);
+                usleep(200);
+                
                 if(strncmp(buffer,"end chat",8) == 0){
-                    kill(child,SIGTERM);
+                    kill(child,SIGINT);
                     running = 0;
+                    exit(EXIT_SUCCESS);
                 }
+                
+                sprintf((char*)file_memory,"%s\n",buffer);
             }
         }
         else{
@@ -116,18 +126,21 @@ int main(int argc, char const *argv[]){
             close(fd);
             
             mm_area = (struct mm_st*) file_memory;
+            buffer = mm_area -> data_0;
             mm_area -> written_0 = 0;
             while(running){
                 if(mm_area -> written_0){
-                    printf("%s", mm_area -> data_0);
+                    printf("%s", buffer);
                     mm_area -> written_0 = 0;
                     if (strncmp(buffer,"end chat",8) == 0){
-                        kill(getppid(),SIGTERM);
+                        kill(child,SIGINT);
                         running = 0;
+                        munmap(file_memory, FILE_LENGTH);
+                        exit(EXIT_SUCCESS);
                     }
+                    strcpy(buffer,"");
                 }
             }
-            munmap(file_memory, FILE_LENGTH);
             return 0;
         }
     }
