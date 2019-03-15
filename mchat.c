@@ -5,6 +5,8 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
+#include <string.h>
+#include <signal.h>
 
 #define FILE_LENGTH 2000
 
@@ -18,7 +20,7 @@ struct mm_st{
     char data_0[BUFSIZ];
     int written_1;
     char data_1[BUFSIZ];
-}
+};
 
 int main(int argc, char const *argv[]){
     int fd, n = 0;
@@ -26,6 +28,7 @@ int main(int argc, char const *argv[]){
     void* file_memory;
     struct mm_st* mm_area;
     char* buffer = NULL;
+    int running = 1;
     
     if (argc > 2){
         fprintf(stderr,"Usage: %s <[1, 2]>\n", *argv);
@@ -41,10 +44,92 @@ int main(int argc, char const *argv[]){
     if (strcmp(*argv, "1") == 0){
         //fork() child process
         child = fork();
+        
+        //If it is parent
+        if (child){
+            file_memory = mmap(0,FILE_LENGTH, PROT_WRITE, MAP_SHARED, fd, 0);
+            close(fd);
+            
+            mm_area = (struct mm_st*) file_memory;
+            while(running){
+                while(mm_area -> written_0){
+                    sleep(1);
+                }
+                fgets(buffer,BUFSIZ,stdin);
+                strcpy(mm_area -> data_0, buffer);
+                mm_area -> written_0 = 1;
+                sprintf((char*)file_memory,"%s\n",buffer);
+                if(strncmp(buffer,"end chat",8) == 0){
+                    kill(child,SIGTERM);
+                    running = 0;
+                }
+            }
+            munmap(file_memory, FILE_LENGTH);
+            return 0;
+        }
+        else{
+            file_memory = mmap(0, FILE_LENGTH, PROT_WRITE | PROT_WRITE, MAP_SHARED, fd, 0);
+            close(fd);
+            
+            mm_area = (struct mm_st*) file_memory;
+            mm_area -> written_1 = 0;
+            while(running){
+                if(mm_area -> written_1){
+                    printf("%s", mm_area -> data_1);
+                    mm_area -> written_1 = 0;
+                    if (strncmp(buffer,"end chat",8) == 0){
+                        kill(getppid(),SIGTERM);
+                        running = 0;
+                    }
+                }
+            }
+            munmap(file_memory, FILE_LENGTH);
+            return 0;
+        }
     }
     else if(strcmp(*argv, "2") == 0){
         //fork() child process
         child = fork();
+        
+        //If it is parent
+        if (child){
+            file_memory = mmap(0,FILE_LENGTH, PROT_WRITE, MAP_SHARED, fd, 0);
+            close(fd);
+            
+            mm_area = (struct mm_st*) file_memory;
+            while(running){
+                while(mm_area -> written_1){
+                    sleep(1);
+                }
+                fgets(buffer,BUFSIZ,stdin);
+                strcpy(mm_area -> data_1, buffer);
+                mm_area -> written_1 = 1;
+                sprintf((char*)file_memory,"%s\n",buffer);
+                if(strncmp(buffer,"end chat",8) == 0){
+                    kill(child,SIGTERM);
+                    running = 0;
+                }
+            }
+        }
+        else{
+            file_memory = mmap(0, FILE_LENGTH, PROT_WRITE | PROT_WRITE, MAP_SHARED, fd, 0);
+            close(fd);
+            
+            mm_area = (struct mm_st*) file_memory;
+            mm_area -> written_0 = 0;
+            while(running){
+                if(mm_area -> written_0){
+                    printf("%s", mm_area -> data_0);
+                    mm_area -> written_0 = 0;
+                    if (strncmp(buffer,"end chat",8) == 0){
+                        kill(getppid(),SIGTERM);
+                        running = 0;
+                    }
+                }
+            }
+            munmap(file_memory, FILE_LENGTH);
+            return 0;
+        }
     }
     
     if (child) kill(child, SIGTERM);
