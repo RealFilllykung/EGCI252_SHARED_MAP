@@ -58,7 +58,7 @@ int main(int argc, char const *argv[]){
             file_memory = mmap(0,FILE_LENGTH, PROT_WRITE, MAP_SHARED, fd, 0);
             close(fd);
             
-            //Attach the struct to shared map
+            //Create the shared map
             mm_area = (struct mm_st*) file_memory;
             buffer = mm_area -> data_0;
             
@@ -91,7 +91,7 @@ int main(int argc, char const *argv[]){
             file_memory = mmap(0, FILE_LENGTH, PROT_WRITE | PROT_WRITE, MAP_SHARED, fd, 0);
             close(fd);
             
-            //Attach the struct to shared map
+            //Create the shared map
             mm_area = (struct mm_st*) file_memory;
             buffer = mm_area -> data_1;
             mm_area -> written_1 = 0;
@@ -122,6 +122,7 @@ int main(int argc, char const *argv[]){
             file_memory = mmap(0,FILE_LENGTH, PROT_WRITE, MAP_SHARED, fd, 0);
             close(fd);
             
+            //Create the shared map
             mm_area = (struct mm_st*) file_memory;
             buffer = mm_area -> data_1;
             
@@ -152,7 +153,7 @@ int main(int argc, char const *argv[]){
             file_memory = mmap(0, FILE_LENGTH, PROT_WRITE | PROT_WRITE, MAP_SHARED, fd, 0);
             close(fd);
             
-            //Attach the struct to shared map
+            //Create the shared map
             mm_area = (struct mm_st*) file_memory;
             buffer = mm_area -> data_0;
             mm_area -> written_0 = 0;
